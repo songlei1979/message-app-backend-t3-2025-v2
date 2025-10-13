@@ -1,59 +1,45 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/reference/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#jobs-overview & https://circleci.com/docs/reference/configuration-reference/#jobs
 jobs:
-  Test:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/guides/execution-managed/executor-intro/ & https://circleci.com/docs/reference/configuration-reference/#executor-job
+  test:
     docker:
-      # Specify the version you desire here
-      # See: https://circleci.com/developer/images/image/cimg/base
-      - image: python:3.10-slim
-
-    # Add steps to the job
-    # See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#steps-overview & https://circleci.com/docs/reference/configuration-reference/#steps
+      - image: cimg/python:3.10  # More CircleCI-friendly image
     steps:
-      # Checkout the code as the first step.
-      - install_package
+      - checkout  
       - run:
-          name: "Install package"
-          command: "pip install -r requirements.txt"
-      - test code
+          name: Install dependencies
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
       - run:
-          name: "Test_code"
-          command: "python manage.py test"
+          name: Run tests
+          command: |
+            . venv/bin/activate
+            python manage.py test
 
-  Build:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/guides/execution-managed/executor-intro/ & https://circleci.com/docs/reference/configuration-reference/#executor-job
+  build:
     docker:
-      # Specify the version you desire here
-      # See: https://circleci.com/developer/images/image/cimg/base
-      - image: python:3.10-slim
-
-    # Add steps to the job
-    # See: https://circleci.com/docs/guides/orchestrate/jobs-steps/#steps-overview & https://circleci.com/docs/reference/configuration-reference/#steps
+      - image: cimg/python:3.10
     steps:
-      # Checkout the code as the first step.
-      - install package
+      - checkout
       - run:
-          name: "Install_package"
-          command: "pip install -r requirements.txt"
-      - test code
+          name: Install dependencies
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
       - run:
-          name: "Build"
-          command: "python manage.py runserver"
+          name: Build / Run
+          command: |
+            . venv/bin/activate
+            python manage.py check  # Replace with `runserver` only if you are running locally
 
-    
-
-# Orchestrate jobs using workflows
-# See: https://circleci.com/docs/guides/orchestrate/workflows/ & https://circleci.com/docs/reference/configuration-reference/#workflows
 workflows:
-  circleci-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  version: 2
+  build-and-test:
     jobs:
-      - Test
-      - Build
+      - test
+      - build:
+          requires:
+            - test
