@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -40,10 +41,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'rest_framework',
     'message',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -88,7 +91,7 @@ if IS_TESTING:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
-            }
+        }
     }
 else:
     DATABASES = {
@@ -101,9 +104,6 @@ else:
             "PORT": os.getenv("DB_PORT"),
         }
     }
-
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -150,3 +150,5 @@ REST_FRAMEWORK = {
         # Other authentication classes if needed
     ]
 }
+
+CORS_ORIGIN_ALLOW_ALL = True
