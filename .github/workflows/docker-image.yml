@@ -44,25 +44,22 @@ jobs:
           printf "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
 
       - name: Deploy on EC2
-        run: |
-          ssh -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOSSH'
-          set -e
-
-          # Ensure the app directory exists; if not, clone it
-          if [ ! -d "${APP_DIR}" ]; then
-            git clone https://github.com/${GITHUB_REPOSITORY}.git "${APP_DIR}"
-          fi
-
-          cd "${APP_DIR}"
-
-          # Fetch the latest code from main
-          git fetch origin main
-          git reset --hard origin/main
-
-          # Build & run containers (uses .env stored on the server)
-          sudo docker compose build
-          sudo docker compose up -d --remove-orphans
-
-          # Show container status
-          sudo docker compose ps
+        run: | 
+          ssh -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+          APP_DIR='${{ secrets.APP_DIR }}' REPO='${{ github.repository }}' 'bash -s' << 'EOSSH'
+            set -e
+      
+            if [ ! -d "$APP_DIR/.git" ]; then
+              mkdir -p "$APP_DIR"
+              git clone https://github.com/$REPO.git "$APP_DIR"
+            fi
+      
+            cd "$APP_DIR"
+            git fetch origin main
+            git reset --hard origin/main
+      
+            sudo docker compose build
+            sudo docker compose up -d --remove-orphans
+            sudo docker compose run --rm web python manage.py migrate --noinput || true
+            sudo docker compose ps
           EOSSH
